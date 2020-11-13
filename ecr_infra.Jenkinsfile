@@ -10,6 +10,15 @@ pipeline {
         string(name: 'STG_REPOSITORYNAME', defaultValue: 'ecs-fargate-cloudservices-poc-repo', description: 'Enter the AWS STG ECR Repo name to create n push the image')
     }
     stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'master',
+                    credentialsId: 'c254bd05-d7ee-4097-9c1e-9f323c938820',
+                    url: 'https://github.com/neerajgulia92/ecs-fargate-cloudservices-poc.git'
+
+                sh "ls -lat"
+            }
+        }
         stage('Create ECR Infra stack for dev') {
             when {
                 // Deploy to dev if dev
