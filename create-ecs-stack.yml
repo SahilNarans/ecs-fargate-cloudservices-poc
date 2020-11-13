@@ -1,0 +1,320 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  Revision: 05-June-2019
+Description: ECS GHA Fargate POC
+Parameters:
+  RepositoryName:
+    Type: String
+    Description: AWS ECR Repository Name
+    Default: automated-fargate-poc
+  Image:
+    Type: String
+    # Update with the Docker image. "You can use images in the Docker Hub registry or specify other repositories (repository-url/image:tag)."
+    Default: 734446176968.dkr.ecr.us-east-1.amazonaws.com/automated-fargate-repo:latest
+  ClusterName:
+    Type: String
+    Description: AWS ECS Fargate Cluster Name
+    Default: scala-poc-fargate
+  TaskDefinitionName:
+    Type: String
+    Description: AWS ECS Fargate Cluster Task Definition name
+    Default: scala-poc
+  ContainerName:
+    Type: String
+    Description: AWS ECS Fargate Container Name
+    Default: scala-poc
+  VPC:
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetA:
+    Type: 'AWS::EC2::Subnet::Id'
+  SubnetB:
+    Type: 'AWS::EC2::Subnet::Id'
+  SGName:
+    Type: String
+    Description: Security Group Name
+    Default: ECSbatchprocessingSecurityGroup
+  ecsTaskRoleName:
+    Type: String
+    Description: AWS IAM ecsEventsRoleName
+    Default: ecsRunTaskRole
+  ecsTaskExecutionRoleName:
+    Type: String
+    Description: AWS IAM ecsTaskExecutionRoleName
+    Default: ecsTaskExecutionRole
+  ServiceName:
+    Type: String
+    Default: ecs-fargate-service
+  ContainerPort:
+    Type: Number
+    Default: 9000
+  LoadBalancerPort:
+    Type: Number
+    Default: 9000
+  HealthCheckPath:
+    Type: String
+    Default: /
+  MinContainers:
+    Type: Number
+    Default: 1
+  MaxContainers:
+    Type: Number
+    Default: 2
+  AutoScalingCPUTargetValue:
+    Type: Number
+    Default: 50
+Resources:
+  ECSTaskDefinitionCustomerManagedPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: ECSTaskExecutionCustomerManagedPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Action:
+              - 'ecr:GetAuthorizationToken'
+              - 'ecr:BatchCheckLayerAvailability'
+              - 'ecr:GetDownloadUrlForLayer'
+              - 'ecr:BatchGetImage'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: '*'
+  IAMRoleforECSTasks:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: /
+      RoleName: !Ref ecsTaskRoleName
+      AssumeRolePolicyDocument: >-
+        {"Version":"2008-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"Service":"ecs-tasks.amazonaws.com"},"Action":"sts:AssumeRole"}]}
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - !Ref ECSTaskDefinitionCustomerManagedPolicy
+  AutoScalingRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Join 
+        - ''
+        - - !Ref ServiceName
+          - AutoScalingRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - >-
+          arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument: "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Sid\":\"\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+        - 'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess'
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: !Ref ClusterName
+      CapacityProviders:
+        - FARGATE_SPOT
+        - FARGATE
+  CloudWatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinition]]
+      RetentionInDays: 365
+  ECSTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    DependsOn: CloudWatchLogsGroup
+    Properties:
+      ContainerDefinitions:
+        - Essential: true
+          Image: !Ref Image
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-group: !Ref CloudWatchLogsGroup
+              awslogs-stream-prefix: ecs
+          MemoryReservation: 128
+          Name: !Ref ContainerName
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              HostPort: !Ref ContainerPort
+              Protocol: "tcp"
+      Family: !Ref TaskDefinitionName
+      # Task Role is to run the ECS Tasks
+      TaskRoleArn: !Ref IAMRoleforECSTasks
+      # Execution role is to make API Calls from fargate to ECR and ECS Cluster
+      ExecutionRoleArn: !Ref ExecutionRole
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      Tags:
+        - Key: Application
+          Value: sbt scala
+        - Key: Owner
+          Value: Eddie Figueroa
+        - Key: Team
+          Value: Web Services
+        - Key: Department
+          Value: IT
+        - Key: Description
+          Value: Cloud Runner for PoC
+  ContainerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: ECS batch processing Security Group
+      GroupName: !Ref SGName
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+        - CidrIpv6: '::/0'
+          IpProtocol: '-1'
+  LoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Join ['', [!Ref ServiceName, LoadBalancerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref LoadBalancerPort
+          ToPort: !Ref LoadBalancerPort
+          CidrIp: 0.0.0.0/0
+  TargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: !Join ['', [!Ref ServiceName, TargetGroup]]
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60
+      TargetType: ip
+      VpcId: !Ref VPC
+  ElasticLoadBalancingV2Listener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      LoadBalancerArn: !Ref ElasticLoadBalancingV2LoadBalancer
+      Port: !Ref LoadBalancerPort
+      Protocol: HTTP
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+  ElasticLoadBalancingV2LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: !Join ['', [!Ref ServiceName, LoadBalancer]]
+      Scheme: internal
+      Type: application
+      Subnets:
+        - !Ref SubnetA
+        - !Ref SubnetB
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      IpAddressType: ipv4
+      LoadBalancerAttributes: 
+        - 
+          Key: "access_logs.s3.enabled"
+          Value: "false"
+        - 
+          Key: "idle_timeout.timeout_seconds"
+          Value: "60"
+        - 
+          Key: "deletion_protection.enabled"
+          Value: "false"
+        - 
+          Key: "routing.http2.enabled"
+          Value: "true"
+        - 
+          Key: "routing.http.drop_invalid_header_fields.enabled"
+          Value: "false"
+        - 
+          Key: "routing.http.desync_mitigation_mode"
+          Value: "defensive"
+  ElasticLoadBalancingV2ListenerRule:
+      Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+      Properties:
+          Priority: "1"
+          ListenerArn: !Ref ElasticLoadBalancingV2Listener
+          Conditions: 
+            - 
+              Field: "path-pattern"
+              Values: 
+                - "/"
+          Actions: 
+            - 
+              Type: "forward"
+              TargetGroupArn: !Ref TargetGroup
+              ForwardConfig: 
+                  TargetGroups: 
+                    - 
+                      TargetGroupArn: !Ref TargetGroup
+                      Weight: 1
+                  TargetGroupStickinessConfig: 
+                      Enabled: false
+  ECSService:
+    Type: 'AWS::ECS::Service'
+    DependsOn: ElasticLoadBalancingV2Listener
+    Properties:
+      ServiceName: !Ref ServiceName
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ECSTaskDefinition
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 0
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - TargetGroupArn: !Ref TargetGroup
+          ContainerName: !Ref ContainerName
+          ContainerPort: !Ref ContainerPort
+      PlatformVersion: LATEST
+      PropagateTags: TASK_DEFINITION
+      SchedulingStrategy: "REPLICA"
+  ApplicationAutoScalingScalableTarget:
+    Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+    Properties:
+      MaxCapacity: !Ref MaxContainers
+      MinCapacity: !Ref MinContainers
+      ResourceId:  !Join ['/', [service, !Ref ECSCluster, !GetAtt ECSService.Name]]
+      RoleARN: !GetAtt AutoScalingRole.Arn
+      ScalableDimension: 'ecs:service:DesiredCount'
+      ServiceNamespace: ecs
+  ApplicationAutoScalingScalingPolicy:
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Properties:
+      PolicyName: !Join ['', [!Ref ServiceName, AutoScalingPolicy]]
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ApplicationAutoScalingScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        TargetValue: !Ref AutoScalingCPUTargetValue

@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  Revision: 05-June-2019
+Description: ECS Fargate Cluster ECR Repo
+Parameters:
+  RepositoryName:
+    Type: String
+    Description: AWS ECR Repository Name
+    Default: automated-fargate-repo
+Resources:
+    ECRRepository:
+        Type: "AWS::ECR::Repository"
+        Properties:
+            RepositoryName: !Ref RepositoryName
+            RepositoryPolicyText:
+              Version: '2012-10-17'
+              Statement:
+                - Sid: AllowSelfAccountPushPull
+                  Effect: Allow
+                  Principal:
+                    AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+                  Action:
+                    - 'ecr:BatchCheckLayerAvailability'
+                    - 'ecr:BatchGetImage'
+                    - 'ecr:CompleteLayerUpload'
+                    - 'ecr:DescribeImages'
+                    - 'ecr:DescribeRepositories'
+                    - 'ecr:GetDownloadUrlForLayer'
+                    - 'ecr:GetRepositoryPolicy'
+                    - 'ecr:InitiateLayerUpload'
+                    - 'ecr:ListImages'
+                    - 'ecr:PutImage'
+                    - 'ecr:UploadLayerPart'
