@@ -5,6 +5,8 @@ pipeline {
 
         text(name: 'AWSACCOUNTID', defaultValue: '', description: 'Enter the AWS Account ID, where to push image to ECR')
 
+        text(name: 'REGION', defaultValue: 'us-east-1', description: 'Enter the AWS Region in which ECR exists')
+
         choice(choices: ['dev' , 'staging'], description: 'Choose a deployment environment.', name: 'DEPLOY_ENV')
     
         string(name: 'REPOSITORYNAME', defaultValue: 'ecs-fargate-cloudservices-poc-repo', description: 'Enter the AWS ECR Repo name to create n push the image')
