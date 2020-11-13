@@ -3,15 +3,13 @@ pipeline {
     parameters {
         string(name: 'ECS_CFTSTACKNAME', defaultValue: 'ecs-fargate-cloudservices-poc', description: 'Enter the AWS ECS CFT Stack Name')
 
-        string(name: 'ECR_CFTSTACKNAME', defaultValue: 'ecs-fargate-cloudservices-poc-repo', description: 'Enter the AWS ECS CFT Stack Name')
-
         text(name: 'AWSACCOUNTID', defaultValue: '', description: 'Enter the AWS Account ID, where to push image to ECR')
-
-        choice(choices: ['TRUE' , 'FALSE'],description: 'Infrastructure Stack Required True or False',name: 'INFRA_REQUESTED_ACTION')
 
         choice(choices: ['dev' , 'staging'], description: 'Choose a deployment environment.', name: 'DEPLOY_ENV')
     
         string(name: 'REPOSITORYNAME', defaultValue: 'ecs-fargate-cloudservices-poc-repo', description: 'Enter the AWS ECR Repo name to create n push the image')
+
+        string(name: 'ECR_IMAGE_TAG', defaultValue: '', description: 'Enter the AWS ECR image tag')
 
         string(name: 'CLUSTERNAME', defaultValue: 'ecs-fargate-cloudservices-poc-cluster', description: 'Enter the AWS ECS cluster name')
 
@@ -36,11 +34,25 @@ pipeline {
     stages {
         stage('Create ECS Infra stack') {
             when {
-                // Only set to true if infrastructure is requested
-                expression { params.INFRA_REQUESTED_ACTION == 'TRUE' }
+                // Check if Dev
+                expression { params.DEPLOY_ENV == 'dev' }
             }
             steps {
-                sh "aws cloudformation create-stack --stack-name ${params.ECS_CFTSTACKNAME} --template-body file://create-ecs-stack.yml --region 'us-east-1' --parameters ParameterKey=RepositoryName,ParameterValue=${params.REPOSITORYNAME} ParameterKey=ClusterName,ParameterValue=${params.CLUSTERNAME} ParameterKey=TaskDefinitionName,ParameterValue=${params.TASKDEFNAME} ParameterKey=ContainerName,ParameterValue=${params.CONTAINERNAME} ParameterKey=VPCID,ParameterValue=${params.VPC_ID} ParameterKey=SubnetID_A,ParameterValue=${params.SUBNET_A} ParameterKey=SubnetID_B,ParameterValue=${params.SUBNET_B} ParameterKey=SGName,ParameterValue=${params.SECURITY_GROUP_NAME} ParameterKey=ecsEventsRoleName,ParameterValue=${params.ECSEVENTROLENAME} ParameterKey=ecsTaskExecutionRoleName,ParameterValue=${params.ECSTASKEXECUTIONROLENAME} ParameterKey=ServiceName,ParameterValue=${params.SERVICE_NAME} --capabilities CAPABILITY_NAMED_IAM"
+                sh "aws cloudformation create-stack --stack-name ${params.ECS_CFTSTACKNAME} --template-body file://create-ecs-stack.yml \
+                --region 'us-east-1' --parameters \
+                ParameterKey=Image,ParameterValue=${params.AWSACCOUNTID}.dkr.ecr.${params.REGION}.amazonaws.com/${params.REPOSITORYNAME}:${params.ECR_IMAGE_TAG} \
+                ParameterKey=RepositoryName,ParameterValue=${params.REPOSITORYNAME} \
+                ParameterKey=ClusterName,ParameterValue=${params.CLUSTERNAME} \
+                ParameterKey=TaskDefinitionName,ParameterValue=${params.TASKDEFNAME} \
+                ParameterKey=ContainerName,ParameterValue=${params.CONTAINERNAME} \
+                ParameterKey=VPCID,ParameterValue=${params.VPC_ID} \
+                ParameterKey=SubnetID_A,ParameterValue=${params.SUBNET_A} \
+                ParameterKey=SubnetID_B,ParameterValue=${params.SUBNET_B} \
+                ParameterKey=SGName,ParameterValue=${params.SECURITY_GROUP_NAME} \
+                ParameterKey=ecsEventsRoleName,ParameterValue=${params.ECSEVENTROLENAME} \
+                ParameterKey=ecsTaskExecutionRoleName,ParameterValue=${params.ECSTASKEXECUTIONROLENAME} \
+                ParameterKey=ServiceName,ParameterValue=${params.SERVICE_NAME} \
+                --capabilities CAPABILITY_NAMED_IAM"
             }
         }
         stage('Check ECS Infra stack status') {
