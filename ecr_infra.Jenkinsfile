@@ -28,15 +28,15 @@ pipeline {
                 sh "aws cloudformation create-stack --stack-name ${params.ECR_CFTSTACKNAME} --template-body file://CF_ProdECR.yaml --region 'us-east-1' --parameters ParameterKey=RepositoryName,ParameterValue=${params.DEV_REPOSITORYNAME} --capabilities CAPABILITY_NAMED_IAM"
             }
         }
-        stage('Create ECR Infra stack for staging') {
-            when {
-                // Deploy to dev if dev
-                expression { params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-                sh "aws cloudformation create-stack --stack-name ${params.ECR_CFTSTACKNAME} --template-body file://CF_ProdECR.yaml --region 'us-east-1' --parameters ParameterKey=RepositoryName,ParameterValue=${params.STG_REPOSITORYNAME} --capabilities CAPABILITY_NAMED_IAM"
-            }
-        }
+        // stage('Create ECR Infra stack for staging') {
+        //     when {
+        //         // Deploy to dev if dev
+        //         expression { params.DEPLOY_ENV == 'staging' }
+        //     }
+        //     steps {
+        //         sh "aws cloudformation create-stack --stack-name ${params.ECR_CFTSTACKNAME} --template-body file://CF_ProdECR.yaml --region 'us-east-1' --parameters ParameterKey=RepositoryName,ParameterValue=${params.STG_REPOSITORYNAME} --capabilities CAPABILITY_NAMED_IAM"
+        //     }
+        // }
         stage('Check ECR Infra stack status') {
             steps {
                 sh "aws cloudformation describe-stacks --stack-name ${params.ECR_CFTSTACKNAME} --query 'Stacks[0].StackStatus' --output text"
