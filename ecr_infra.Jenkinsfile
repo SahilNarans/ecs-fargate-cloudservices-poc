@@ -11,7 +11,7 @@ pipeline {
         stage('Git Checkout') {
             steps {
                 git branch: 'master',
-                    credentialsId: 'c254bd05-d7ee-4097-9c1e-9f323c938820',
+                    credentialsId: 'neerajgulia92github',
                     url: 'https://github.com/neerajgulia92/ecs-fargate-cloudservices-poc.git'
 
                 sh "ls -lat"
