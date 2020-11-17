@@ -50,9 +50,16 @@ pipeline {
                 //         sh "git tag v${DEVIMAGE_TAG}"
                 //         sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/gvenkat1216/automated-dev-update-poc.git v${DEVIMAGE_TAG}"
                 // }
+                }
             }
         }
-        }
+        // stage('Update Version file on S3'){
+        //     steps {
+        //         script {
+        //             sh "aws s3 cp dev_version.txt s3://versioning-skechers01/dev_version.txt"
+        //         }
+        //     }
+        // }
         // stage('Update Version file on S3'){
         //     steps {
         //         script {

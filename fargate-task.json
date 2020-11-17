@@ -1,0 +1,21 @@
+{
+    "family": "sample-fargate", 
+    "networkMode": "awsvpc", 
+    "containerDefinitions": [
+        {
+            "name": "fargate-app", 
+            "image": "httpd:2.4", 
+            "portMappings": [
+                {
+                    "containerPort": 9000, 
+                    "hostPort": 9000, 
+                    "protocol": "tcp"
+                }
+            ], 
+            "essential": true
+        }
+    ], 
+    "requiresCompatibilities": [
+        "FARGATE"
+    ]
+}
