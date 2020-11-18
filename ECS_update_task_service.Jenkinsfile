@@ -18,7 +18,6 @@ pipeline {
         stage('Update ECS Task Definition JSON File') {
             steps {
                 sh """
-                // sed -i -e 's#1.0.0#${env.ECR_IMAGE_TAG}#' ./fargate-task.json
                 sed -i "s/"image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:1.0.0"\$/"image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:{env.ECR_IMAGE_TAG}"/"
                 """
             }
