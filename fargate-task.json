@@ -5,7 +5,7 @@
         {
             "name": "ecs-fargate-cloudservices-poc-container", 
             "image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:imagetag",
-            "cpu": 1,
+            "cpu": 512,
             "memory": 128,
             "portMappings": [
                 {
