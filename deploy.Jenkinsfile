@@ -51,7 +51,7 @@ pipeline {
                 ParameterKey=SubnetA,ParameterValue=${params.SUBNET_A} \
                 ParameterKey=SubnetB,ParameterValue=${params.SUBNET_B} \
                 ParameterKey=SGName,ParameterValue=${params.SECURITY_GROUP_NAME} \
-                ParameterKey=ecsEventsRoleName,ParameterValue=${params.ECSEVENTROLENAME} \
+                ParameterKey=ecsTaskRoleName,ParameterValue=${params.ECSEVENTROLENAME} \
                 ParameterKey=ecsTaskExecutionRoleName,ParameterValue=${params.ECSTASKEXECUTIONROLENAME} \
                 ParameterKey=ServiceName,ParameterValue=${params.SERVICE_NAME} \
                 --capabilities CAPABILITY_NAMED_IAM"
