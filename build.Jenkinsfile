@@ -32,6 +32,7 @@ pipeline {
                 echo 'Build steps are in progress!!!'
                 sh '''SBT_VERSION=1.3.13
                       sbt test
+                      sbt run
                       sbt stage
                    '''
             }
