@@ -47,9 +47,9 @@ pipeline {
                 ParameterKey=ClusterName,ParameterValue=${params.CLUSTERNAME} \
                 ParameterKey=TaskDefinitionName,ParameterValue=${params.TASKDEFNAME} \
                 ParameterKey=ContainerName,ParameterValue=${params.CONTAINERNAME} \
-                ParameterKey=VPCID,ParameterValue=${params.VPC_ID} \
-                ParameterKey=SubnetID_A,ParameterValue=${params.SUBNET_A} \
-                ParameterKey=SubnetID_B,ParameterValue=${params.SUBNET_B} \
+                ParameterKey=VPC,ParameterValue=${params.VPC_ID} \
+                ParameterKey=SubnetA,ParameterValue=${params.SUBNET_A} \
+                ParameterKey=SubnetB,ParameterValue=${params.SUBNET_B} \
                 ParameterKey=SGName,ParameterValue=${params.SECURITY_GROUP_NAME} \
                 ParameterKey=ecsEventsRoleName,ParameterValue=${params.ECSEVENTROLENAME} \
                 ParameterKey=ecsTaskExecutionRoleName,ParameterValue=${params.ECSTASKEXECUTIONROLENAME} \
