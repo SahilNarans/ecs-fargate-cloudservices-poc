@@ -8,4 +8,4 @@ EXPOSE 9000
 
 ADD target target
 
-ENTRYPOINT ["target/universal/stage/bin/gha-fargate-poc"]
+ENTRYPOINT ["target/universal/stage/bin/ecs-fargate-cloudservices-poc"]
