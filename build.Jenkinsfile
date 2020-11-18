@@ -17,15 +17,15 @@ pipeline {
         string(name: 'DEVREPOSITORYNAME', defaultValue: 'ecs-fargate-cloudservices-poc-repo', description: 'Enter the AWS ECR DEV Repo name to create n push the image')
     }
     stages {
-        stage('Git Checkout') {
-            steps {
-                git branch: 'master',
-                    credentialsId: 'neerajgulia92github',
-                    url: 'https://github.com/neerajgulia92/ecs-fargate-cloudservices-poc.git'
+        // stage('Git Checkout') {
+        //     steps {
+        //         git branch: 'master',
+        //             credentialsId: 'neerajgulia92github',
+        //             url: 'https://github.com/neerajgulia92/ecs-fargate-cloudservices-poc.git'
 
-                sh "ls -lat"
-            }
-        }
+        //         sh "ls -lat"
+        //     }
+        // }
         stage('SBT Build') {
             steps {
                 println "***********************************OLDER_VERSION version is ${env.DEV_VERSION}"
@@ -56,15 +56,15 @@ pipeline {
                 sh "sudo bash set_version.sh version.txt"
             } 
         }
-        stage('Git Checkout 2') {
-            steps {
-                git branch: 'master',
-                    credentialsId: 'neerajgulia92github',
-                    url: 'https://github.com/neerajgulia92/ecs-fargate-cloudservices-poc.git'
+        // stage('Git Checkout 2') {
+        //     steps {
+        //         git branch: 'master',
+        //             credentialsId: 'neerajgulia92github',
+        //             url: 'https://github.com/neerajgulia92/ecs-fargate-cloudservices-poc.git'
 
-                sh "ls -lat"
-            }
-        }
+        //         sh "ls -lat"
+        //     }
+        // }
         stage('Docker Tag and Push Stage') {
             steps {
                 script {
