@@ -4,10 +4,17 @@ def getDevVersion() {
     }
 }
 
+def imagetag() {
+    script {
+        return sh (script: 'cat version.txt | tail -n 1 | tr -cd "0-9\\."', returnStdout: true)
+    }
+}
+
 pipeline {
     agent any
     environment {
-        ECR_IMAGE_TAG = getDevVersion()
+        ECR_IMAGE_VERSION = getDevVersion()
+        IMAGE_TAG = imagetag()
     }
     parameters {
         string(name: 'CLUSTERNAME', defaultValue: 'ecs-fargate-cloudservices-poc-cluster', description: 'Enter the AWS ECS cluster name')
@@ -17,9 +24,9 @@ pipeline {
     stages {
         stage('Update ECS Task Definition JSON File') {
             steps {
-                sh """
-                sed -i "s/"image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:1.0.0"\$/"image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:{env.ECR_IMAGE_TAG}"/"
-                """
+                echo "${env.ECR_IMAGE_VERSION}"
+                echo "${env.IMAGE_TAG}"
+                sh "sed -i 's/imagetag/${env.IMAGE_TAG}/g' ./fargate-task.json"
             }
         }
         stage('Update ECS Task Definition') {

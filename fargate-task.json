@@ -4,7 +4,7 @@
     "containerDefinitions": [
         {
             "name": "ecs-fargate-cloudservices-poc-container", 
-            "image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:1.0.0", 
+            "image": "734446176968.dkr.ecr.us-east-1.amazonaws.com/ecs-fargate-cloudservices-poc-repo:imagetag", 
             "portMappings": [
                 {
                     "containerPort": 9000, 
