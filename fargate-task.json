@@ -19,6 +19,8 @@
     ],
     "cpu": "1024",
     "memory": "2048",
+    "taskRoleArn": "arn:aws:iam::734446176968:role/ecsRunTaskRole",
+    "executionRoleArn": "arn:aws:iam::734446176968:role/ecs-fargate-serviceExecutionRole",
     "requiresCompatibilities": [
         "FARGATE"
     ]
