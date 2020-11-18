@@ -5,7 +5,7 @@ def getDevVersion() {
 }
 
 pipeline {
-    agent any     
+    agent any
     environment {
         DEV_VERSION = getDevVersion()
     }
@@ -32,7 +32,8 @@ pipeline {
                 echo 'Build steps are in progress!!!'
                 sh '''SBT_VERSION=1.3.13
                       sbt test
-                      sbt "runMain example.Hello"
+                      sbt run
+                    //   sbt "runMain example.Hello"
                       sbt stage
                    '''
             }
