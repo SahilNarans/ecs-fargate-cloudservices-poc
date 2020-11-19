@@ -33,7 +33,7 @@ pipeline {
         }
         stage('Update ECS Task Definition') {
             steps {
-                // sh "aws ecs register-task-definition --cli-input-json file://fargate-task.json"
+                sh "aws ecs register-task-definition --cli-input-json file://fargate-task.json"
                 sh "aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query 'taskDefinition.taskDefinitionArn' --output text > taskdefarn.txt"
             }
         }
@@ -42,7 +42,7 @@ pipeline {
                 script {
                     def TASKDEF_ARN = readFile(file: 'taskdefarn.txt')
                     echo "${TASKDEF_ARN}"
-                    // sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
+                    sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --force-new-deployment --task-definition ${TASKDEF_ARN}"
                 }
             }
         }
