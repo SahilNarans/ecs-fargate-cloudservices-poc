@@ -34,13 +34,13 @@ pipeline {
         stage('Update ECS Task Definition') {
             steps {
                 // sh "aws ecs register-task-definition --cli-input-json file://fargate-task.json"
-                sh "aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query 'taskDefinition.taskDefinitionArn' --output text"
+                sh "aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query 'taskDefinition.taskDefinitionArn' --output text > taskdefarn.txt"
             }
         }
         stage('Check ECS Infra stack status') {
             steps {
                 script {
-                    def TASKDEF_ARN = sh(script: 'aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query "taskDefinition.taskDefinitionArn" --output text')
+                    def TASKDEF_ARN = sh(script: 'cat taskdefarn.txt | tail -n 1')
                     println(TASKDEF_ARN)
                     echo '${TASKDEF_ARN}'
                     // sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
