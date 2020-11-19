@@ -45,10 +45,10 @@ Reference: https://www.playframework.com/documentation/2.8.x/ApplicationSecret
 
 ```shell
 # need to set it as executable if we zipped it beforehand
-chmod +x bin/gha-fargate-poc
+chmod +x bin/ecs-fargate-cloudservices-poc
 
 # run executable script
-target/universal/stage/bin/gha-fargate-poc -Dplay.http.secret.key='QCY?tAnfk?aZ?iwrNwnxIlR6CTf:G3gf:90Latabg@5241AB`R5W:1uDFN];Ik@n'
+target/universal/stage/bin/ecs-fargate-cloudservices-poc -Dplay.http.secret.key='QCY?tAnfk?aZ?iwrNwnxIlR6CTf:G3gf:90Latabg@5241AB`R5W:1uDFN];Ik@n'
 ```
 
 For Docker purposes, can add `$WORKSPACE/target/universal/stage/`.
