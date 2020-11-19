@@ -33,7 +33,7 @@ pipeline {
         }
         stage('Update ECS Task Definition') {
             steps {
-                sh "aws ecs register-task-definition --cli-input-json file://fargate-task.json"
+                // sh "aws ecs register-task-definition --cli-input-json file://fargate-task.json"
                 sh "aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query 'taskDefinition.taskDefinitionArn' --output text"
             }
         }
