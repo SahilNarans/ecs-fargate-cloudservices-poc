@@ -40,8 +40,7 @@ pipeline {
         stage('Check ECS Infra stack status') {
             steps {
                 script {
-                    def TASKDEF_ARN = sh(script: 'cat taskdefarn.txt')
-                    println(TASKDEF_ARN)
+                    def TASKDEF_ARN = readFile(file: 'taskdefarn.txt')
                     echo "${TASKDEF_ARN}"
                     // sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
                 }
