@@ -19,6 +19,8 @@ pipeline {
     parameters {
         string(name: 'CLUSTERNAME', defaultValue: 'ecs-fargate-cloudservices-poc-cluster', description: 'Enter the AWS ECS cluster name')
 
+        string(name: 'TASKDEFNAME', defaultValue: 'ecs-fargate-cloudservices-poc-taskdef', description: 'Enter the AWS ECS Task Definition Name')
+
         string(name: 'SERVICE_NAME', defaultValue: 'ecs-fargate-service', description: 'Enter the ECS Service name')
     }
     stages {
@@ -32,11 +34,16 @@ pipeline {
         stage('Update ECS Task Definition') {
             steps {
                 sh "aws ecs register-task-definition --cli-input-json file://fargate-task.json"
+                sh "aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query 'taskDefinition.taskDefinitionArn' --output text"
             }
         }
         stage('Check ECS Infra stack status') {
             steps {
-                sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --force-new-deployment"
+                script {
+                    def TASKDEF_ARN = sh(script: 'aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query "taskDefinition.taskDefinitionArn" --output text')
+                    println(TASKDEF_ARN)
+                    sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
+                }
             }
         }
     }
