@@ -42,7 +42,7 @@ pipeline {
                 script {
                     def TASKDEF_ARN = sh(script: 'cat taskdefarn.txt | tail -n 1')
                     println(TASKDEF_ARN)
-                    echo '${TASKDEF_ARN}'
+                    echo "${TASKDEF_ARN}"
                     // sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
                 }
             }
