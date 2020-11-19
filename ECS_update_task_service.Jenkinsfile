@@ -42,7 +42,8 @@ pipeline {
                 script {
                     def TASKDEF_ARN = sh(script: 'aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query "taskDefinition.taskDefinitionArn" --output text')
                     println(TASKDEF_ARN)
-                    sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
+                    echo '${TASKDEF_ARN}'
+                    // sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --task-definition ${TASKDEF_ARN} --force-new-deployment"
                 }
             }
         }
