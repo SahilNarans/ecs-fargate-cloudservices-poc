@@ -23,5 +23,27 @@
     "executionRoleArn": "arn:aws:iam::734446176968:role/ecs-fargate-serviceExecutionRole",
     "requiresCompatibilities": [
         "FARGATE"
+    ],
+    "tags": [
+        {
+            "key": "Application",
+            "value": "sbt scala"
+        },
+        {
+            "key": "Owner",
+            "value": "Eddie Figueroa"
+        },
+        {
+            "key": "Team",
+            "value": "Web Services"
+        },
+        {
+            "key": "Department",
+            "value": "IT"
+        },
+        {
+            "key": "Description",
+            "value": "Cloud Runner for PoC"
+        }
     ]
 }
