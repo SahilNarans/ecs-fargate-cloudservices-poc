@@ -80,7 +80,7 @@ pipeline {
         stage('Check if Tasks are Running') {
             steps {
                 sh '''
-                taskarn_array=( $(aws ecs list-tasks --cluster ${params.CLUSTERNAME} | jq -r ".taskArns[]" | cut -d "/" -f 3)
+                taskarn_array=($(aws ecs list-tasks --cluster ${params.CLUSTERNAME} | jq -r ".taskArns[]" | cut -d "/" -f 3))
                 aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}
                 '''
             }
