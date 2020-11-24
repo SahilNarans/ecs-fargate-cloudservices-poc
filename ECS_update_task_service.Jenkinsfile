@@ -75,19 +75,19 @@ pipeline {
                 script {
                     def ASGStatus = readFile(file: 'ASGstatus.txt')
                     println(ASGStatus)
+                    if ('${ASGStatus}' == 'Successful') {
+                        sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                        sh "aws application-autoscaling register-scalable-target \
+                            --service-namespace ecs \
+                            --scalable-dimension ecs:service:DesiredCount \
+                            --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                            --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
+                            --min-capacity 1 \
+                            --max-capacity 2"
+                    }else {
+                        currentBuild.result = "FAILURE"
+                    }
                 }
-            if ('${ASGStatus}' == 'Successful') {
-                sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
-                sh "aws application-autoscaling register-scalable-target \
-                    --service-namespace ecs \
-                    --scalable-dimension ecs:service:DesiredCount \
-                    --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
-                    --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
-                    --min-capacity 1 \
-                    --max-capacity 2"
-            }else {
-                currentBuild.result = "FAILURE"
-            }
             }
         }
     }
