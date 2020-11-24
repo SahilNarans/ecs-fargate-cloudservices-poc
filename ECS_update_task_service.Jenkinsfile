@@ -77,15 +77,15 @@ pipeline {
                 sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
             }
         }
-        stage('Check if Tasks are Running') {
-            steps {
-                script {
-                    def taskarn_array = sh(script: "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster | jq -r '.taskArns[]' | cut -d '/' -f 3")
-                    echo "${taskarn_array}"
-                    sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
-                }
-            }
-        }
+        // stage('Check if Tasks are Running') {
+        //     steps {
+        //         script {
+        //             def taskarn_array = sh(script: "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster | jq -r '.taskArns[]' | cut -d '/' -f 3")
+        //             echo "${taskarn_array}"
+        //             sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
+        //         }
+        //     }
+        // }
         stage('Scale Back to 1,1,2 for ASG') {
             steps {
                 sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCoun --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
