@@ -10,6 +10,13 @@ def imagetag() {
     }
 }
 
+def traditional_int_for_loop(list) {
+    sh "echo Going to echo a list"
+    for (int i = 0; i < list.size(); i++) {
+        sh "echo Hello ${list[i]}"
+    }
+}
+
 pipeline {
     agent any
     environment {
@@ -67,27 +74,45 @@ pipeline {
                 sh "aws application-autoscaling describe-scalable-targets \
                 --service-namespace ecs \
                 --resource-ids service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
-                sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text > ASGstatus.txt"
+                sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
             }
         }
-        stage('Describe ASG activities,check and scale functions') {
+        stage('Check if Tasks are Running') {
             steps {
-                script {
-                    def ASGStatus = readFile(file: 'ASGstatus.txt')
-                    println(ASGStatus)
-                    if ('${ASGStatus}' == 'Successful') {
-                        sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
-                        sh "aws application-autoscaling register-scalable-target \
-                            --service-namespace ecs \
-                            --scalable-dimension ecs:service:DesiredCount \
-                            --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
-                            --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
-                            --min-capacity 1 \
-                            --max-capacity 2"
-                    }else {
-                        currentBuild.result = "UNSTABLE"
-                    }
-                }
+                taskarnlist=sh 'aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query "taskArns[]" --output json'
+                sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks $taskarnlist"
             }
         }
+        stage('Test 4: traditional for loop') {
+            traditional_int_for_loop(abcs)
+        }
+        stage('Scale Back to 1,1,2 for ASG') {
+            steps {
+                sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCoun --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                sh "aws application-autoscaling register-scalable-target \
+                --service-namespace ecs \
+                --scalable-dimension ecs:service:DesiredCount \
+                --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
+                --min-capacity 1 \
+                --max-capacity 2"
+                // script {
+                //     def ASGStatus = readFile(file: 'ASGstatus.txt')
+                //     println(ASGStatus)
+                //     if ('${ASGStatus}' == 'Successful') {
+                //         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                //         sh "aws application-autoscaling register-scalable-target \
+                //             --service-namespace ecs \
+                //             --scalable-dimension ecs:service:DesiredCount \
+                //             --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                //             --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
+                //             --min-capacity 1 \
+                //             --max-capacity 2"
+                //     }else {
+                //         currentBuild.result = "UNSTABLE"
+                //     }
+                // }
+            }
+        }
+    }
 }
