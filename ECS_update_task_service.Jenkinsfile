@@ -48,6 +48,7 @@ pipeline {
                     def TASKDEF_ARN = readFile(file: 'taskdefarn.txt')
                     echo "${TASKDEF_ARN}"
                     sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --force-new-deployment --task-definition ${TASKDEF_ARN}"
+                    sh "sleep 10"
                 }
             }
         }
@@ -60,6 +61,7 @@ pipeline {
                     --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                     --min-capacity 2 \
                     --max-capacity 4"
+                sh "sleep 10"
             }
         }
         stage('Describe ASG targets') {
@@ -76,6 +78,7 @@ pipeline {
                     println(testResult)
                     if ('${testResult}' = 'Successful') {
                         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                        sh "sleep 10"
                         sh "aws application-autoscaling register-scalable-target \
                             --service-namespace ecs \
                             --scalable-dimension ecs:service:DesiredCount \
@@ -83,6 +86,7 @@ pipeline {
                             --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                             --min-capacity 1 \
                             --max-capacity 2"
+                        sh "sleep 10"
                     }else {
                         currentBuild.result = "FAILURE"
                     }
