@@ -48,7 +48,6 @@ pipeline {
                     def TASKDEF_ARN = readFile(file: 'taskdefarn.txt')
                     echo "${TASKDEF_ARN}"
                     sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --force-new-deployment --task-definition ${TASKDEF_ARN}"
-                    sh "sleep 10"
                 }
             }
         }
@@ -61,7 +60,6 @@ pipeline {
                     --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                     --min-capacity 2 \
                     --max-capacity 4"
-                sh "sleep 10"
             }
         }
         stage('Describe ASG targets') {
@@ -69,17 +67,16 @@ pipeline {
                 sh "aws application-autoscaling describe-scalable-targets \
                 --service-namespace ecs \
                 --resource-ids service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text > ASGstatus.txt"
             }
         }
         stage('Describe ASG activities,check and scale functions') {
             steps {
                 script {
-                    testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
-                    println(testResult)
-                    when { expression  { '${testResult}' == 'Successful' }}
-                    steps {
+                    def ASGStatus = readFile(file: 'ASGstatus.txt')
+                    println(ASGStatus)
+                    if ('${ASGStatus}' == 'Successful') {
                         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
-                        sh "sleep 10"
                         sh "aws application-autoscaling register-scalable-target \
                             --service-namespace ecs \
                             --scalable-dimension ecs:service:DesiredCount \
@@ -87,15 +84,7 @@ pipeline {
                             --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                             --min-capacity 1 \
                             --max-capacity 2"
-                        sh "sleep 10"
-                    }
-        stage('Describe ASG activities,check and scale functions on Failure') {
-            steps {
-                script {
-                    testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
-                    println(testResult)
-                    when { expression  { '${testResult}' != 'Successful' }}
-                    steps {
+                    }else {
                         currentBuild.result = "FAILURE"
                     }
                 }
