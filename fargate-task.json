@@ -14,7 +14,15 @@
                     "protocol": "tcp"
                 }
             ], 
-            "essential": true
+            "essential": true,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-region": "us-east-1",
+                    "awslogs-group": "/ecs/ecs-fargate-serviceTaskDefinition",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
         }
     ],
     "cpu": "1024",

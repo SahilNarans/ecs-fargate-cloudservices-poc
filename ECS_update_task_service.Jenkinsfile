@@ -37,12 +37,55 @@ pipeline {
                 sh "aws ecs describe-task-definition --task-definition ${params.TASKDEFNAME} --query 'taskDefinition.taskDefinitionArn' --output text > taskdefarn.txt"
             }
         }
-        stage('Check ECS Infra stack status') {
+        stage('Remove 1,1,2 ASG') {
+            steps {
+                sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+            }
+        }
+        stage('Update ECS Infra ECS Service') {
             steps {
                 script {
                     def TASKDEF_ARN = readFile(file: 'taskdefarn.txt')
                     echo "${TASKDEF_ARN}"
                     sh "aws ecs update-service --cluster ${params.CLUSTERNAME} --service ${params.SERVICE_NAME} --force-new-deployment --task-definition ${TASKDEF_ARN}"
+                }
+            }
+        }
+        stage('Double the AWS ASG to 2,2,4') {
+            steps {
+                sh "aws application-autoscaling register-scalable-target \
+                    --service-namespace ecs \
+                    --scalable-dimension ecs:service:DesiredCount \
+                    --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                    --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
+                    --min-capacity 2 \
+                    --max-capacity 4"
+            }
+        }
+        stage('Describe ASG targets') {
+            steps {
+                sh "aws application-autoscaling describe-scalable-targets \
+                --service-namespace ecs \
+                --resource-ids service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+            }
+        }
+        stage('Describe ASG activities,check and scale functions') {
+            steps {
+                script {
+                    def testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[0].StatusCode' --output text"
+                    echo "${testResult}"
+                    if ('${testResult}' == 'Successful') {
+                        sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                        sh "aws application-autoscaling register-scalable-target \
+                            --service-namespace ecs \
+                            --scalable-dimension ecs:service:DesiredCount \
+                            --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                            --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
+                            --min-capacity 1 \
+                            --max-capacity 2"
+                    }else {
+                        exit 1
+                    }
                 }
             }
         }
