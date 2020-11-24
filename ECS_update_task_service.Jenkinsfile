@@ -79,8 +79,10 @@ pipeline {
         }
         stage('Check if Tasks are Running') {
             steps {
-                def taskarnlist=sh 'aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query "taskArns[]" --output json'
-                sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarnlist}"
+                script {
+                    def taskarnlist=sh 'aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query "taskArns[]" --output json'
+                    sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarnlist}"
+                }
             }
         }
         stage('Scale Back to 1,1,2 for ASG') {
