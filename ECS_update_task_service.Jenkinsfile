@@ -88,7 +88,7 @@ pipeline {
         // }
         stage('Scale Back to 1,1,2 for ASG') {
             steps {
-                sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCoun --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
                 sh "aws application-autoscaling register-scalable-target \
                 --service-namespace ecs \
                 --scalable-dimension ecs:service:DesiredCount \
