@@ -10,12 +10,12 @@ def imagetag() {
     }
 }
 
-def traditional_int_for_loop(list) {
-    sh "echo Going to echo a list"
-    for (int i = 0; i < list.size(); i++) {
-        sh "echo Hello ${list[i]}"
-    }
-}
+// def traditional_int_for_loop(list) {
+//     sh "echo Going to echo a list"
+//     for (int i = 0; i < list.size(); i++) {
+//         sh "echo Hello ${list[i]}"
+//     }
+// }
 
 pipeline {
     agent any
@@ -79,12 +79,9 @@ pipeline {
         }
         stage('Check if Tasks are Running') {
             steps {
-                taskarnlist=sh 'aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query "taskArns[]" --output json'
-                sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks $taskarnlist"
+                def taskarnlist=sh 'aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query "taskArns[]" --output json'
+                sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarnlist}"
             }
-        }
-        stage('Test 4: traditional for loop') {
-            traditional_int_for_loop(abcs)
         }
         stage('Scale Back to 1,1,2 for ASG') {
             steps {
