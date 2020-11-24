@@ -67,6 +67,7 @@ pipeline {
                     --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                     --min-capacity 2 \
                     --max-capacity 4"
+                sh "sleep 120"
             }
         }
         stage('Describe ASG targets') {
