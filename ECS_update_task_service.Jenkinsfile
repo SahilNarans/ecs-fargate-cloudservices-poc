@@ -73,10 +73,12 @@ pipeline {
         stage('Describe ASG activities,check and scale functions') {
             steps {
                 script {
-                    def ASGStatus = readFile(file: 'ASGstatus.txt')
-                    println(ASGStatus)
-                    if ('${ASGStatus}' == 'Successful') {
+                     sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text" > A.txt
+                }
+                    when { expression  {  return readFile('A.txt').contains('Successful') }}
+                    steps {
                         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                        sh "sleep 10"
                         sh "aws application-autoscaling register-scalable-target \
                             --service-namespace ecs \
                             --scalable-dimension ecs:service:DesiredCount \
@@ -84,11 +86,33 @@ pipeline {
                             --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                             --min-capacity 1 \
                             --max-capacity 2"
-                    }else {
-                        currentBuild.result = "UNSTABLE"
+                        sh "sleep 10"
                     }
-                }
             }
         }
+
+
+        stage('Describe ASG activities,check and scale functions on Failure') {
+            steps {
+                script {
+                     sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text" > A.txt
+                }
+                    when { expression  { return readFile('A.txt').contains('InProgress') }}
+                    steps {
+                        sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+                        sh "sleep 10"
+                        sh "aws application-autoscaling register-scalable-target \
+                            --service-namespace ecs \
+                            --scalable-dimension ecs:service:DesiredCount \
+                            --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                            --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
+                            --min-capacity 1 \
+                            --max-capacity 2"
+                        sh "sleep 10"
+                    }
+            }
+        }
+                
+            
     }
 }
