@@ -84,7 +84,7 @@ pipeline {
                             --min-capacity 1 \
                             --max-capacity 2"
                     }else {
-                        exit 1
+                        currentBuild.result = "UNSTABLE"
                     }
                 }
             }
