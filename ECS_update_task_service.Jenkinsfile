@@ -76,7 +76,8 @@ pipeline {
                 script {
                     testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
                     println(testResult)
-                    if ('${testResult}' == 'Successful') {
+                    when { expression  { '${testResult}' == 'Successful' }}
+                    steps {
                         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
                         sh "sleep 10"
                         sh "aws application-autoscaling register-scalable-target \
@@ -87,7 +88,14 @@ pipeline {
                             --min-capacity 1 \
                             --max-capacity 2"
                         sh "sleep 10"
-                    }else {
+                    }
+        stage('Describe ASG activities,check and scale functions on Failure') {
+            steps {
+                script {
+                    testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
+                    println(testResult)
+                    when { expression  { '${testResult}' != 'Successful' }}
+                    steps {
                         currentBuild.result = "FAILURE"
                     }
                 }
