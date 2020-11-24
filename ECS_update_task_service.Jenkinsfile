@@ -72,9 +72,9 @@ pipeline {
         stage('Describe ASG activities,check and scale functions') {
             steps {
                 script {
-                    def testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[0].StatusCode' --output text"
-                    echo "${testResult}"
-                    if ('${testResult}' == 'InProgress') {
+                    def testResult= sh "aws application-autoscaling describe-scaling-activities --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} --query 'ScalingActivities[1].StatusCode' --output text"
+                    println(testResult)
+                    if ('${testResult}' == 'Successful') {
                         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
                         sh "aws application-autoscaling register-scalable-target \
                             --service-namespace ecs \
