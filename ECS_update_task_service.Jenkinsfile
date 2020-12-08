@@ -86,10 +86,11 @@ pipeline {
         }
         stage('Check if Tasks are Running') {
             steps {
+                sh "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query taskArns > taskARNlist.txt"
                 script {
-                    taskarn_array = sh "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query taskArns"
-                    echo "${taskarn_array}"
-                    // sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
+                    def TASK_ARN_LIST = readFile(file: 'taskARNlist.txt')
+                    echo "${TASK_ARN_LIST}"
+                    // sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${TASK_ARN_LIST}"
                 }
             }
         }
