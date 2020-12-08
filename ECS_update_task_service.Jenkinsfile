@@ -67,7 +67,13 @@ pipeline {
                     --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
                     --min-capacity 2 \
                     --max-capacity 4"
-                sh "sleep 120"
+                sh "aws application-autoscaling put-scaling-policy --service-namespace ecs \
+                --scalable-dimension ecs:service:DesiredCount \
+                --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+                --policy-name cpu50-target-tracking-scaling-policy \
+                --policy-type TargetTrackingScaling \
+                --target-tracking-scaling-policy-configuration file://ecsautoscalingpolicyconfig.json"
+                sh "sleep 60"
             }
         }
         stage('Describe ASG targets') {
@@ -81,23 +87,30 @@ pipeline {
         stage('Check if Tasks are Running') {
             steps {
                 script {
-                    def taskarn_array = [sh(script: "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster | jq -r '.taskArns[]' | cut -d '/' -f 3")]
+                    def taskarn_array = sh(script: "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query taskArns ")
                     echo "${taskarn_array}"
-                    sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
+                    // sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
                 }
             }
         }
-        stage('Scale Back to 1,1,2 for ASG') {
-            steps {
-                sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
-                sh "aws application-autoscaling register-scalable-target \
-                --service-namespace ecs \
-                --scalable-dimension ecs:service:DesiredCount \
-                --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
-                --role-arn arn:aws:iam::734446176968:role/ecs-fargate-serviceAutoScalingRole \
-                --min-capacity 1 \
-                --max-capacity 2"
-            }
-        }
+        // stage('Scale Back to 1,1,2 for ASG') {
+        //     steps {
+        //         sh "aws application-autoscaling deregister-scalable-target --service-namespace ecs --scalable-dimension ecs:service:DesiredCount --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME}"
+        //         sh "aws application-autoscaling register-scalable-target \
+        //         --service-namespace ecs \
+        //         --scalable-dimension ecs:service:DesiredCount \
+        //         --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+        //         --role-arn arn:aws:iam::${params.AWSACCOUNTID}:role/ecs-fargate-serviceAutoScalingRole \
+        //         --min-capacity 1 \
+        //         --desired-capacity 1\
+        //         --max-capacity 2"
+        //         sh "aws application-autoscaling put-scaling-policy --service-namespace ecs \
+        //         --scalable-dimension ecs:service:DesiredCount \
+        //         --resource-id service/${params.CLUSTERNAME}/${params.SERVICE_NAME} \
+        //         --policy-name cpu50-target-tracking-scaling-policy \
+        //         --policy-type TargetTrackingScaling \
+        //         --target-tracking-scaling-policy-configuration file://ecsautoscalingpolicyconfig.json"
+        //     }
+        // }
     }
 }
