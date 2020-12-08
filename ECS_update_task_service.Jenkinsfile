@@ -73,7 +73,7 @@ pipeline {
                 --policy-name cpu50-target-tracking-scaling-policy \
                 --policy-type TargetTrackingScaling \
                 --target-tracking-scaling-policy-configuration file://ecsautoscalingpolicyconfig.json"
-                sh "sleep 60"
+                sh "sleep 10"
             }
         }
         stage('Describe ASG targets') {
@@ -87,7 +87,7 @@ pipeline {
         stage('Check if Tasks are Running') {
             steps {
                 script {
-                    task_arns=[$(aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query 'taskArns' --output text)]
+                    taskarn_array = sh "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query taskArns"
                     echo "${taskarn_array}"
                     // sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
                 }
