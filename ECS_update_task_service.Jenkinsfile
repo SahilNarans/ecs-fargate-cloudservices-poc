@@ -87,7 +87,7 @@ pipeline {
         stage('Check if Tasks are Running') {
             steps {
                 script {
-                    def taskarn_array = [sh(script: "aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query taskArns")]
+                    task_arns=[$(aws ecs list-tasks --cluster ecs-fargate-cloudservices-poc-cluster --query 'taskArns' --output text)]
                     echo "${taskarn_array}"
                     // sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${taskarn_array}"
                 }
