@@ -90,6 +90,9 @@ pipeline {
                 script {
                     def TASK_ARN_LIST = readFile(file: 'taskARNlist.txt')
                     echo "${TASK_ARN_LIST}"
+                   // ${TASK_ARN_LIST}.join(", ")
+                   // println ${TASK_ARN_LIST}.split()
+                   
                     // sh "aws ecs wait tasks-running --cluster ${params.CLUSTERNAME} --tasks ${TASK_ARN_LIST}"
                 }
             }
